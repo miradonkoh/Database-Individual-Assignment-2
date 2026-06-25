@@ -1,0 +1,149 @@
+Samira Ewura-Esi Donkoh
+20962028
+Database Individual Assignment 2
+
+question 7.24
+
+MariaDB [assignment3]> create table department(
+    -> deptNo int primary key, deptName varchar(50),mgrEmpNo int
+    -> );
+Query OK, 0 rows affected (0.013 sec)
+
+
+MariaDB [assignment3]> create table employee(empNo int primary key, fName varchar(50),lName varchar(50), address varchar(70), dob date,sex char(1) check (sex in ('M',  'F')),position varchar(50)check(position in ('Manager', 'Team leader', 'Analyst', 'Software developer')), deptNo int, foreign key(deptNo) references department(deptNo));
+Query OK, 0 rows affected (0.024 sec)
+
+
+MariaDB [assignment3]> alter table department add constraint fk foreign key(mgrEmpNo) references employee(empNo);
+Query OK, 0 rows affected (0.064 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+
+MariaDB [assignment3]> create table project(
+    -> projNo int primary key, projName varchar(70), deptNo int, foreign key(deptNo) references department(deptNo));
+Query OK, 0 rows affected (0.030 sec)
+
+
+MariaDB [assignment3]> create table workson(empNo int, projNo int, dateWorked date, hoursWorked int check(hoursWorked between 0 and 40), primary key(empNo, projNo, dateWorked), foreign key(empNo) references employee(empNo), foreign key(projNo) references project(projNo));
+Query OK, 0 rows affected (0.031 sec)
+
+
+question 7.25 
+ create view femalemanager as select project.projNo,project.projName,project.deptNo from project join department on project.deptNo=department.deptNo join employee on department.mgrEmpNo=employee.empNo where sex='F' order by project.projNo;
+Query OK, 0 rows affected (0.030 sec)
+
+
+MariaDB [assignment3]> insert into department values
+    -> (10, 'IT', NULL),
+    -> (20, 'Finance', NULL),
+    -> (30, 'HR', NULL);
+Query OK, 3 rows affected (0.014 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+
+MariaDB [assignment3]> insert into employee values
+    -> (1, 'Ama', 'Mensah', 'Accra', '1995-04-12', 'F', 'Manager', 10),
+    -> (2, 'Kojo', 'Owusu', 'Tema', '1990-06-20', 'M', 'Team Leader', 10),
+    -> (3, 'Akosua', 'Addo', 'Kumasi', '1993-09-15', 'F', 'Manager', 20),
+    -> (4, 'Yaw', 'Boateng', 'Cape Coast', '1988-01-10', 'M', 'Analyst', 20),
+    -> (5, 'Esi', 'Dlamini', 'Accra', '1997-11-05', 'F', 'Software Developer', 30);
+Query OK, 5 rows affected (0.020 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+MariaDB [assignment3]> update department set mgrEmpNo=1 where deptNo =10;
+Query OK, 1 row affected (0.020 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+MariaDB [assignment3]> update department set mgrEmpNo=3 where deptNo= 20; 
+Query OK, 1 row affected (0.002 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+MariaDB [assignment3]> update department set mgrEmpNo = 5 where deptNo = 30;
+Query OK, 1 row affected (0.017 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+MariaDB [assignment3]> insert into project values
+    -> (100, 'Payroll System', 20),
+    -> (101, 'Website Upgrade', 10),
+    -> (102, 'HR Portal', 30),
+    -> (103, 'Inventory System', 10);
+Query OK, 4 rows affected (0.016 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+MariaDB [assignment3]> insert into workson values
+    -> (2, 101, '2026-06-01', 5),
+    -> (4, 100, '2026-06-02', 8),
+    -> (5, 102, '2026-06-03', 6),
+    -> (1, 101, '2026-06-04', 7),
+    -> (3, 100, '2026-06-05', 4);
+Query OK, 5 rows affected (0.017 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+MariaDB [assignment3]> select * from femalemanager;
++--------+------------------+--------+
+| projNo | projName         | deptNo |
++--------+------------------+--------+
+|    100 | Payroll System   |     20 |
+|    101 | Website Upgrade  |     10 |
+|    102 | HR Portal        |     30 |
+|    103 | Inventory System |     10 |
++--------+------------------+--------+
+4 rows in set (0.016 sec)
+
+question 7.26
+MariaDB [assignment3]> create view projectview as select employee.empNo, employee.fName, employee.lName,project.projName, workson.hoursWorked from employee join workson on employee.empNo=workson.empNo join project on workson.projNo=project.projNo;
+Query OK, 0 rows affected (0.023 sec)
+
+MariaDB [assignment3]> select * from projectview;
++-------+--------+---------+-----------------+-------------+
+| empNo | fName  | lName   | projName        | hoursWorked |
++-------+--------+---------+-----------------+-------------+
+|     1 | Ama    | Mensah  | Website Upgrade |           7 |
+|     2 | Kojo   | Owusu   | Website Upgrade |           5 |
+|     3 | Akosua | Addo    | Payroll System  |           4 |
+|     4 | Yaw    | Boateng | Payroll System  |           8 |
+|     5 | Esi    | Dlamini | HR Portal       |           6 |
++-------+--------+---------+-----------------+-------------+
+5 rows in set (0.005 sec)
+
+question 7.27
+MariaDB [assignment3]> create view EmpProject(empNo,projNo,totalHours) as select w.empNo, w.projNo, sum(hoursWorked) from employee e, project p, workson w where e.empNo=w.empNo AND p.projNo=w.projNo GROUP BY w.empNo, w.projNo;
+Query OK, 0 rows affected (0.021 sec)
+
+a. MariaDB [assignment3]> select * from EmpProject;
++-------+--------+------------+
+| empNo | projNo | totalHours |
++-------+--------+------------+
+|     1 |    101 |          7 |
+|     2 |    101 |          5 |
+|     3 |    100 |          4 |
+|     4 |    100 |          8 |
+|     5 |    102 |          6 |
++-------+--------+------------+
+5 rows in set (0.021 sec)
+
+b. MariaDB [assignment3]> select projNo from EmpProject where projNo='SCCS';
+Empty set, 1 warning (0.015 sec)
+
+c. MariaDB [assignment3]> select count(projNo) from EmpProject where empNo='E1';
++---------------+
+| count(projNo) |
++---------------+
+|             0 |
++---------------+
+1 row in set (0.017 sec)
+
+d. 
+MariaDB [assignment3]> select empNo, totalHours from EmpProject Group By empNo;
++-------+------------+
+| empNo | totalHours |
++-------+------------+
+|     1 |          7 |
+|     2 |          5 |
+|     3 |          4 |
+|     4 |          8 |
+|     5 |          6 |
++-------+------------+
+5 rows in set (0.002 sec)
+
+
+
